@@ -116,26 +116,134 @@ class Lexical(object):
         self.tokens = []
         self.column_index = 0
         self.line_index = 0
+        self.string_flag = False
+        self.string_context = ''
 
-    def decode(self):
-        string_flag = None
-        string_context = ''
-        context_stack = [0]
+        # this var store the current identation level (in number of chars)
+        self.context_stack = [0]
 
-        for line in self.input_lines:
-            self.column_index = 0
-            cleaned_line = line.replace('\n', '').replace('\r', '')
-            cleaned_line = cleaned_line.replace(' ', '').replace('\t', '')
+    def add_token(self, token, column):
+        if not self.tokens:
+            raise IndentationError
 
-            if not string_flag and not cleaned_line:
-                # blank line, just ignore it
-                self.line_index += 1
+        if token.lexogram == '\n' and self.tokens[-1].id not in (31, 93, 94):
+            # at the end of each statement are autmatic added a token ';',
+            # this facilitate the grammar construction
+            self.tokens.append({
+                'token': next(filter(
+                                     lambda val: val.lexogram == ';',
+                                     Lexical.TABLE_TOKENS.values())),
+                'lexogram': ';',
+                'line': self.line_index,
+                'column': self.column_index,
+            })
+
+        self.tokens.append({
+            'token': token.id,
+            'lexogram': token.lexogram,
+            'line': self.line_index,
+            'column': self.column_index
+        })
+
+    def manage_context(self, line):
+        # here the identation is recognized
+        context_lexogram = ''
+        while re.match(r'( |\t)', line[self.column_index]):
+            context_lexogram += line[self.column_index]
+            self.column_index += 1
+
+        # by default tabs are considered eight spaces
+        context_lexogram = context_lexogram.replace('\t', ' ' * 8)
+
+        number_characters = len(context_lexogram)
+        if number_characters == self.context_stack[-1]:
+            # same identation level just pass
+            pass
+        elif number_characters > self.context_stack[-1]:
+            # identation level increase
+            self.context_stack.append(number_characters)
+            self.add_token(Lexical.TABLE_TOKENS['INDENT'], column=0)
+        elif number_characters < self.context_stack[-1]:
+            # identation level decreased
+            if number_characters not in self.context_stack:
+                # if the current number of chars isn't on stack,
+                # this means that a wrong identation are found
+                raise IndentationError
+
+            while number_characters != self.context_stack[-1]:
+                # while an identation level equal to the current
+                # number of charactres are found, dedent tokens are
+                # added.
+                context_stack.pop()
+                self.add_token(
+                    Lexical.TABLE_TOKENS['DEDENT'], column=0)
+
+    def is_blank_line(self, line):
+        cleaned_line = line.replace('\n', '').replace('\r', '')
+        cleaned_line = cleaned_line.replace(' ', '').replace('\t', '')
+
+        if not self.string_flag and not cleaned_line:
+            self.line_index += 1
+            return True
+        return False
+
+    def possible_tokens_for_char(self, char):
+        """
+            Return a list of tokens with starts with this char
+        """
+        return [
+            token for token in Lexical.TABLE_TOKENS.values()
+            if token.lexogram is not None and token.lexogram.startswith(char)
+        ]
+
+    def discover_const_or_identifier(self, char, line):
+        """
+            This method discover if the string analyzed is an constant or an
+            indentifier and return the correct token object
+        """
+        raise NotImplementedError  # TODO
+
+    def process_line(self, line):
+        while self.column_index < len(line):
+            start_column = self.column_index
+            char = line[self.column_index]
+
+            if char in (' ', '\t'):
+                if self.string_flag:
+                    self.string_context += char
+                self.column_index += 1
                 continue
 
-            if not string_flag:
-                context_lexogram = ''
-                while re.match(r'( |\t)', line[self.column_index]):
-                    context_lexogram += line[self.column_index]
-                    self.column_index += 1
+            possible_tokens = self.possible_tokens_for_char(char)
 
-                context_lexogram = context_lexogram.replace('\t', ' ' * 8)
+            try:
+                dot_token = next(filter(
+                    lambda token: token.lexogram == '.', possible_tokens))
+
+                if re.match(r'\d', line[self.column_index + 1]):
+                    # if the next element is an number this means that this dot
+                    # is part of an float number
+                    possible_tokens.remove(dot_token)
+            except StopIteration:
+                pass
+
+            chosed_token = None
+            if not possible_tokens:
+                # if has no possible_token this means that the token is an
+                # constant of an identifier
+                chosed_token = self.discover_const_or_identifier(char, line)
+
+            # TODO develop other rules
+
+    def decode(self):
+        for line in self.input_lines:
+            self.column_index = 0
+
+            if self.is_blank_line(line):
+                # blank line, just ignore it
+                continue
+
+            if not self.string_flag:
+                self.manage_context(line)
+
+            self.process_line(line)
