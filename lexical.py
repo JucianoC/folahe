@@ -218,7 +218,7 @@ class Lexical(object):
         elif re.match(r'[0-9]', char):
             return self.const_decimal(line)
         elif re.match(r'(_|[A-Z]|[a-z])', char):
-            return self.identifier()
+            return self.identifier(line)
 
     def const_decimal(self, line):
         lexogram = ''
@@ -234,8 +234,19 @@ class Lexical(object):
         const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
         return Token(id=const_dec.id, lexogram=lexogram)
 
-    def identifier(self):
-        raise NotImplementedError  # TODO
+    def identifier(self, line):
+        column = self.column_index
+        lexogram = ''
+
+        while (
+               column < len(line) and
+               re.match(r'([0-9]|_|[A-Z]|[a-z])', line[column])):
+            lexogram += line[column]
+            column += 1
+
+        self.column_index = column
+        token_id = Lexical.TABLE_TOKENS['ID']
+        return Token(id=token_id.id, lexogram=lexogram)
 
     def const_hex_oct_bin(self, line):
         self.column_index += 1

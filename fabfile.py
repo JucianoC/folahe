@@ -6,6 +6,6 @@ def tests():
     commands = [
         'PYTHONPATH=./',
         'python -m pytest -v --cov-report term-missing --cov=. tests/'
-        ' --showlocals --pep8',
+        ' --showlocals --fulltrace --pep8',
     ]
     local(';'.join(commands))

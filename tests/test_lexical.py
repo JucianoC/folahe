@@ -146,3 +146,15 @@ def test_recognize_const_bin():
     assert len(tokens) == 1
     assert tokens[0]['token'] == cosnt_bin.id
     assert tokens[0]['lexogram'] == '0b110011010101'
+
+
+def test_recognize_identifier():
+    instance = Lexical(StringIO("zxcv"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_id = Lexical.TABLE_TOKENS['ID']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_id.id
+    assert tokens[0]['lexogram'] == 'zxcv'
