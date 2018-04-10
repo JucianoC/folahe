@@ -123,7 +123,7 @@ class Lexical(object):
         self.context_stack = [0]
 
     def add_token(self, token, column):
-        if not self.tokens:
+        if not self.tokens and token.id == Lexical.TABLE_TOKENS['INDENT'].id:
             raise IndentationError
 
         if token.lexogram == '\n' and self.tokens[-1].id not in (31, 93, 94):
@@ -132,7 +132,7 @@ class Lexical(object):
             self.tokens.append({
                 'token': next(filter(
                                      lambda val: val.lexogram == ';',
-                                     Lexical.TABLE_TOKENS.values())),
+                                     Lexical.TABLE_TOKENS.values())).id,
                 'lexogram': ';',
                 'line': self.line_index,
                 'column': self.column_index,
@@ -201,7 +201,91 @@ class Lexical(object):
             This method discover if the string analyzed is an constant or an
             indentifier and return the correct token object
         """
+        if char == '0':
+            # if this token starts with zero, means that it's a const zero
+            # or a number in hex/oct/bin notation, or an zero in scientific
+            # notation (eg: 0e123)
+            if self.column_index + 1 >= len(line):
+                return self.const_zero()
+            elif re.match(r'(x|o|b|X|O|B)', line[self.column_index + 1]):
+                return self.const_hex_oct_bin()
+            elif re.match(r'(e|E|\.)', line[self.column_index + 1]):
+                return self.const_float(line)
+            else:
+                return self.const_zero()
+        elif char == '.':
+            return self.const_float(line)
+        elif re.match(r'[0-9]', char):
+            return self.const_decimal(line)
+        elif re.match(r'(_|[A-Z]|[a-z])', char):
+            return self.identifier()
+
+    def const_decimal(self, line):
+        lexogram = ''
+        column = self.column_index
+
+        while column < len(line) and re.match(r'([0-9]|_)', line[column]):
+            lexogram += line[column]
+            column += 1
+        if column < len(line) and re.match(r'(\.|e|E)', line[column]):
+            return self.const_float(line)
+
+        self.column_index = column
+        const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
+        return Token(id=const_dec.id, lexogram=lexogram)
+
+    def identifier(self):
         raise NotImplementedError  # TODO
+
+    def const_hex_oct_bin(self):
+        raise NotImplementedError  # TODO
+
+    def const_float(self, line):
+        column = self.column_index
+        lexogram = ''
+
+        if re.match(r'[0-9]', line[column]):
+            while column < len(line) and re.match(r'[0-9]', line[column]):
+                lexogram += line[column]
+                column += 1
+
+        elif line[column] == '.':
+            pass
+        else:
+            raise SyntaxError("Token {} ({}:{})".format(
+                line[column], self.line_index, self.column_index))
+
+        if column < len(line) and '.' == line[column]:
+            lexogram += '.'
+            column += 1
+            while column < len(line) and re.match(r'[0-9]', line[column]):
+                lexogram += line[column]
+                column += 1
+        elif column < len(line) and re.match(r'(e|E)', line[column]):
+            pass
+        else:
+            raise SyntaxError("Token {} ({}:{})".format(
+                line[column], self.line_index, self.column_index))
+
+        if column < len(line) and re.match(r'(e|E)', line[column]):
+            lexogram += line[column]
+            column += 1
+            if column < len(line) and re.match(r'(\+|\-)', line[column]):
+                lexogram += line[column]
+                column += 1
+            while column < len(line) and re.match(r'[0-9]', line[column]):
+                lexogram += line[column]
+                column += 1
+
+        self.column_index = column
+        const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
+        return Token(id=const_float.id, lexogram=lexogram)
+
+    def const_zero(self):
+        self.column_index += 1
+        const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
+        token = Token(id=const_dec.id, lexogram='0')
+        return token
 
     def process_line(self, line):
         while self.column_index < len(line):
@@ -232,6 +316,9 @@ class Lexical(object):
                 # if has no possible_token this means that the token is an
                 # constant of an identifier
                 chosed_token = self.discover_const_or_identifier(char, line)
+
+            if chosed_token:
+                self.add_token(chosed_token, column=start_column)
 
             # TODO develop other rules
 

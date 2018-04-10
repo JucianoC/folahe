@@ -38,3 +38,75 @@ def test_possible_tokens_for_char():
         token.lexogram for token in instance.possible_tokens_for_char('o')])
 
     assert lexograms_for_o == ('or', )
+
+
+def test_recognize_const_zero():
+    instance = Lexical(StringIO("0"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['lexogram'] == '0'
+
+
+def test_recognize_const_decimal():
+    instance = Lexical(StringIO("123456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['lexogram'] == '123456'
+
+
+def test_recognize_const_float():
+    instance = Lexical(StringIO("123.456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['lexogram'] == '123.456'
+
+
+def test_recognize_const_float_starting_with_dot():
+    instance = Lexical(StringIO(".123456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['lexogram'] == '.123456'
+
+
+def test_recognize_const_float_starting_with_zero():
+    instance = Lexical(StringIO("0.123456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['lexogram'] == '0.123456'
+
+
+def test_recognize_const_float_with_scientifc_notation():
+    instance = Lexical(StringIO("10e123456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['lexogram'] == '10e123456'
