@@ -69,10 +69,10 @@ def test_recognize_const_float():
     instance.decode()
 
     tokens = instance.tokens
-    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+    const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
-    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '123.456'
 
 
@@ -81,10 +81,10 @@ def test_recognize_const_float_starting_with_dot():
     instance.decode()
 
     tokens = instance.tokens
-    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+    const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
-    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '.123456'
 
 
@@ -93,10 +93,10 @@ def test_recognize_const_float_starting_with_zero():
     instance.decode()
 
     tokens = instance.tokens
-    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+    const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
-    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '0.123456'
 
 
@@ -105,8 +105,44 @@ def test_recognize_const_float_with_scientifc_notation():
     instance.decode()
 
     tokens = instance.tokens
-    const_dec = Lexical.TABLE_TOKENS['CONSTFLOAT']
+    const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
-    assert tokens[0]['token'] == const_dec.id
+    assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '10e123456'
+
+
+def test_recognize_const_hexadecimal():
+    instance = Lexical(StringIO("0x123456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_hex = Lexical.TABLE_TOKENS['CONSTHEX']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == const_hex.id
+    assert tokens[0]['lexogram'] == '0x123456'
+
+
+def test_recognize_const_octal():
+    instance = Lexical(StringIO("0o123456"))
+    instance.decode()
+
+    tokens = instance.tokens
+    cosnt_oct = Lexical.TABLE_TOKENS['CONSTOCT']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == cosnt_oct.id
+    assert tokens[0]['lexogram'] == '0o123456'
+
+
+def test_recognize_const_bin():
+    instance = Lexical(StringIO("0b110011010101"))
+    instance.decode()
+
+    tokens = instance.tokens
+    cosnt_bin = Lexical.TABLE_TOKENS['CONSTBIN']
+
+    assert len(tokens) == 1
+    assert tokens[0]['token'] == cosnt_bin.id
+    assert tokens[0]['lexogram'] == '0b110011010101'

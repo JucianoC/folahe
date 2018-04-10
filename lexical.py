@@ -208,7 +208,7 @@ class Lexical(object):
             if self.column_index + 1 >= len(line):
                 return self.const_zero()
             elif re.match(r'(x|o|b|X|O|B)', line[self.column_index + 1]):
-                return self.const_hex_oct_bin()
+                return self.const_hex_oct_bin(line)
             elif re.match(r'(e|E|\.)', line[self.column_index + 1]):
                 return self.const_float(line)
             else:
@@ -237,8 +237,34 @@ class Lexical(object):
     def identifier(self):
         raise NotImplementedError  # TODO
 
-    def const_hex_oct_bin(self):
-        raise NotImplementedError  # TODO
+    def const_hex_oct_bin(self, line):
+        self.column_index += 1
+        mods = {
+            'x': {
+                'token': Lexical.TABLE_TOKENS['CONSTHEX'],
+                'pattern': r'([0-9]|[a-f]|[A-F])'},
+            'o': {
+                'token': Lexical.TABLE_TOKENS['CONSTOCT'],
+                'pattern': r'[0-7]'},
+            'b': {
+                'token': Lexical.TABLE_TOKENS['CONSTBIN'],
+                'pattern': r'[0-1]'},
+        }
+
+        char = line[self.column_index]
+        token_type = mods[char.lower()]
+        lexogram = '0{}'.format(char)
+        column = self.column_index + 1
+
+        while (
+               column < len(line) and
+               re.match(token_type['pattern'], line[column])):
+            lexogram += line[column]
+            column += 1
+
+        self.column_index = column
+        token = Token(id=token_type['token'].id, lexogram=lexogram)
+        return token
 
     def const_float(self, line):
         column = self.column_index

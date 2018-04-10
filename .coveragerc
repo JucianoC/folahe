@@ -1,2 +1,2 @@
 [run]
-omit=tests/*,env/*
+omit=tests/*,env/*,fabfile.py
