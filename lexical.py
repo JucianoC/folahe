@@ -114,6 +114,7 @@ class Lexical(object):
             raise TypeError("input_file must be a file-like object")
         self.input_lines = input_file.readlines()
         self.tokens = []
+        self.token_objects = []
         self.column_index = 0
         self.line_index = 0
         self.string_flag = False
@@ -122,28 +123,34 @@ class Lexical(object):
         # this var store the current identation level (in number of chars)
         self.context_stack = [0]
 
+    def __str__(self):
+        return "<Lexical {}>".format(self.tokens)
+
     def add_token(self, token, column):
         if not self.tokens and token.id == Lexical.TABLE_TOKENS['INDENT'].id:
             raise IndentationError
 
-        if token.lexogram == '\n' and self.tokens[-1].id not in (31, 93, 94):
+        if token.lexogram == '\n' and self.tokens[-1]['token'] not in (31, 93, 94):
             # at the end of each statement are autmatic added a token ';',
             # this facilitate the grammar construction
+            semicolon_token = next(filter(
+                lambda val: val.lexogram == ';',
+                Lexical.TABLE_TOKENS.values()))
             self.tokens.append({
-                'token': next(filter(
-                                     lambda val: val.lexogram == ';',
-                                     Lexical.TABLE_TOKENS.values())).id,
+                'token': semicolon_token.id,
                 'lexogram': ';',
                 'line': self.line_index,
-                'column': self.column_index,
+                'column': column,
             })
+            self.token_objects.append(semicolon_token)
 
         self.tokens.append({
             'token': token.id,
             'lexogram': token.lexogram,
             'line': self.line_index,
-            'column': self.column_index
+            'column': column
         })
+        self.token_objects.append(token)
 
     def manage_context(self, line):
         # here the identation is recognized
@@ -324,6 +331,29 @@ class Lexical(object):
         token = Token(id=const_dec.id, lexogram='0')
         return token
 
+    def discover_token(self, line, possible_tokens):
+        def valid_token(token):
+            lexogram = ''
+            column = self.column_index
+            for char in token.lexogram:
+                if line[column] == char:
+                    lexogram += char
+                    column += 1
+            if lexogram == token.lexogram:
+                try:
+                    return not bool(re.match(r'[a-zA-Z_]+', line[column]))
+                except IndexError:
+                    return True
+            else:
+                return False
+
+        compatible_tokens = list(filter(valid_token, possible_tokens))
+        if not compatible_tokens:
+            return None
+        chosed_token = sorted(compatible_tokens, reverse=True)[0]
+        self.column_index += len(chosed_token.lexogram)
+        return chosed_token
+
     def process_line(self, line):
         while self.column_index < len(line):
             start_column = self.column_index
@@ -336,7 +366,6 @@ class Lexical(object):
                 continue
 
             possible_tokens = self.possible_tokens_for_char(char)
-
             try:
                 dot_token = next(filter(
                     lambda token: token.lexogram == '.', possible_tokens))
@@ -353,6 +382,14 @@ class Lexical(object):
                 # if has no possible_token this means that the token is an
                 # constant of an identifier
                 chosed_token = self.discover_const_or_identifier(char, line)
+            else:
+                chosed_token = self.discover_token(line, possible_tokens)
+                if not chosed_token:
+                    # if chosed_token is None at this point this means that
+                    # this token is an id who starts with the same char that
+                    # some reserverd word
+                    chosed_token = self.discover_const_or_identifier(
+                        char, line)
 
             if chosed_token:
                 self.add_token(chosed_token, column=start_column)

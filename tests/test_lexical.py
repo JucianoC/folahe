@@ -48,6 +48,8 @@ def test_recognize_const_zero():
     const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_dec.id
     assert tokens[0]['lexogram'] == '0'
 
@@ -60,6 +62,8 @@ def test_recognize_const_decimal():
     const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_dec.id
     assert tokens[0]['lexogram'] == '123456'
 
@@ -72,6 +76,8 @@ def test_recognize_const_float():
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '123.456'
 
@@ -84,6 +90,8 @@ def test_recognize_const_float_starting_with_dot():
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '.123456'
 
@@ -96,6 +104,8 @@ def test_recognize_const_float_starting_with_zero():
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '0.123456'
 
@@ -108,6 +118,8 @@ def test_recognize_const_float_with_scientifc_notation():
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
     assert tokens[0]['lexogram'] == '10e123456'
 
@@ -120,6 +132,8 @@ def test_recognize_const_hexadecimal():
     const_hex = Lexical.TABLE_TOKENS['CONSTHEX']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_hex.id
     assert tokens[0]['lexogram'] == '0x123456'
 
@@ -132,6 +146,8 @@ def test_recognize_const_octal():
     cosnt_oct = Lexical.TABLE_TOKENS['CONSTOCT']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == cosnt_oct.id
     assert tokens[0]['lexogram'] == '0o123456'
 
@@ -144,6 +160,8 @@ def test_recognize_const_bin():
     cosnt_bin = Lexical.TABLE_TOKENS['CONSTBIN']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == cosnt_bin.id
     assert tokens[0]['lexogram'] == '0b110011010101'
 
@@ -156,5 +174,21 @@ def test_recognize_identifier():
     const_id = Lexical.TABLE_TOKENS['ID']
 
     assert len(tokens) == 1
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_id.id
     assert tokens[0]['lexogram'] == 'zxcv'
+
+
+def test_recognize_reserved_word():
+    instance = Lexical(StringIO("or\n"))
+    instance.decode()
+
+    tokens = instance.tokens
+    const_or = Lexical.TABLE_TOKENS['OR']
+
+    assert len(tokens) == 3
+    assert tokens[0]['line'] == 0
+    assert tokens[0]['column'] == 0
+    assert tokens[0]['token'] == const_or.id
+    assert tokens[0]['lexogram'] == 'or'
