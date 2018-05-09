@@ -123,7 +123,7 @@ class Lexical(object):
         # this var store the current identation level (in number of chars)
         self.context_stack = [0]
 
-    def __str__(self):
+    def __repr__(self):
         return "<Lexical {}>".format(self.tokens)
 
     def add_token(self, token, column):
@@ -181,7 +181,7 @@ class Lexical(object):
                 # while an identation level equal to the current
                 # number of charactres are found, dedent tokens are
                 # added.
-                context_stack.pop()
+                self.context_stack.pop()
                 self.add_token(
                     Lexical.TABLE_TOKENS['DEDENT'], column=0)
 
@@ -448,6 +448,6 @@ class Lexical(object):
         for value in [ele for ele in self.context_stack if ele]:
             self.add_token(Lexical.TABLE_TOKENS['DEDENT'], column=0)
 
-        # self.add_token(
-        #     Token(id=Lexical.TABLE_TOKENS['ENDMARKER'].id,
-        #           lexogram='$'), column=0)
+        self.add_token(
+            Token(id=Lexical.TABLE_TOKENS['ENDMARKER'].id,
+                  lexogram='$'), column=0)

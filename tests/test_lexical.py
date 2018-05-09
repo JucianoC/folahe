@@ -47,7 +47,7 @@ def test_recognize_const_zero():
     tokens = instance.tokens
     const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_dec.id
@@ -61,7 +61,7 @@ def test_recognize_const_decimal():
     tokens = instance.tokens
     const_dec = Lexical.TABLE_TOKENS['CONSTDEC']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_dec.id
@@ -75,7 +75,7 @@ def test_recognize_const_float():
     tokens = instance.tokens
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
@@ -89,7 +89,7 @@ def test_recognize_const_float_starting_with_dot():
     tokens = instance.tokens
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
@@ -103,7 +103,7 @@ def test_recognize_const_float_starting_with_zero():
     tokens = instance.tokens
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
@@ -117,7 +117,7 @@ def test_recognize_const_float_with_scientifc_notation():
     tokens = instance.tokens
     const_float = Lexical.TABLE_TOKENS['CONSTFLOAT']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_float.id
@@ -131,7 +131,7 @@ def test_recognize_const_hexadecimal():
     tokens = instance.tokens
     const_hex = Lexical.TABLE_TOKENS['CONSTHEX']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_hex.id
@@ -145,7 +145,7 @@ def test_recognize_const_octal():
     tokens = instance.tokens
     cosnt_oct = Lexical.TABLE_TOKENS['CONSTOCT']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == cosnt_oct.id
@@ -159,7 +159,7 @@ def test_recognize_const_bin():
     tokens = instance.tokens
     cosnt_bin = Lexical.TABLE_TOKENS['CONSTBIN']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == cosnt_bin.id
@@ -173,7 +173,7 @@ def test_recognize_identifier():
     tokens = instance.tokens
     const_id = Lexical.TABLE_TOKENS['ID']
 
-    assert len(tokens) == 1
+    assert len(tokens) == 2
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_id.id
@@ -187,7 +187,7 @@ def test_recognize_reserved_word():
     tokens = instance.tokens
     const_or = Lexical.TABLE_TOKENS['OR']
 
-    assert len(tokens) == 3
+    assert len(tokens) == 4
     assert tokens[0]['line'] == 0
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_or.id
@@ -199,9 +199,22 @@ def test_recognize_string():
     instance.decode()
 
     tokens = instance.tokens
-    assert len(tokens) == 5
+    assert len(tokens) == 6
     assert tokens[0]['lexogram'] == "'"
     assert tokens[1]['lexogram'] == "hello world"
     assert tokens[2]['lexogram'] == "'"
     assert tokens[3]['lexogram'] == ";"
     assert tokens[4]['lexogram'] == "\n"
+
+
+def test_recognize_if_block():
+    instance = Lexical(StringIO("""
+if i < 20:
+    print("Hello World!")
+elif i == 20:
+    print("Bye World!")
+else:
+    pass
+    """))
+    instance.decode()
+    assert len(instance.tokens) == 42  # don't panic
