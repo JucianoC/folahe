@@ -340,6 +340,9 @@ class Lexical(object):
                     lexogram += char
                     column += 1
             if lexogram == token.lexogram:
+                if not re.match(r'[a-zA-Z]+', lexogram):
+                    return True
+
                 try:
                     return not bool(re.match(r'[a-zA-Z_]+', line[column]))
                 except IndexError:
@@ -392,9 +395,42 @@ class Lexical(object):
                         char, line)
 
             if chosed_token:
-                self.add_token(chosed_token, column=start_column)
+                if self.string_flag and chosed_token == self.string_flag:
+                    string_token = Token(id=92, lexogram=self.string_context)
+                    self.add_token(
+                        string_token,
+                        column=start_column - len(self.string_context))
+                    self.string_flag = None
+                    self.string_context = ''
 
-            # TODO develop other rules
+                elif chosed_token in (
+                    Lexical.TABLE_TOKENS['QUOTE'],
+                    Lexical.TABLE_TOKENS['DQUOTE'],
+                    Lexical.TABLE_TOKENS['TRIPLEQUOTE'],
+                    Lexical.TABLE_TOKENS['TRIPLEDQUOTE']):
+                    self.string_flag = chosed_token
+
+                elif self.string_flag:
+                    self.string_context += chosed_token.lexogram
+                    continue
+
+                elif chosed_token.lexogram == '#':
+                    self.add_token(
+                        Lexical.TABLE_TOKENS['NEWLINE'],
+                        column=self.column_index)
+                    break
+                self.add_token(chosed_token, column=start_column)
+            else:
+                if self.string_flag:
+                    self.string_context += char
+                    self.column_index += 1
+                    continue
+                else:
+                    raise SyntaxError("Token {} ({}:{})".format(
+                        line[start_column], self.line_index,
+                        self.column_index))
+
+        self.line_index += 1
 
     def decode(self):
         for line in self.input_lines:
@@ -408,3 +444,10 @@ class Lexical(object):
                 self.manage_context(line)
 
             self.process_line(line)
+
+        for value in [ele for ele in self.context_stack if ele]:
+            self.add_token(Lexical.TABLE_TOKENS['DEDENT'], column=0)
+
+        # self.add_token(
+        #     Token(id=Lexical.TABLE_TOKENS['ENDMARKER'].id,
+        #           lexogram='$'), column=0)

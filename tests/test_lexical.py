@@ -192,3 +192,16 @@ def test_recognize_reserved_word():
     assert tokens[0]['column'] == 0
     assert tokens[0]['token'] == const_or.id
     assert tokens[0]['lexogram'] == 'or'
+
+
+def test_recognize_string():
+    instance = Lexical(StringIO("'hello world'\n"))
+    instance.decode()
+
+    tokens = instance.tokens
+    assert len(tokens) == 5
+    assert tokens[0]['lexogram'] == "'"
+    assert tokens[1]['lexogram'] == "hello world"
+    assert tokens[2]['lexogram'] == "'"
+    assert tokens[3]['lexogram'] == ";"
+    assert tokens[4]['lexogram'] == "\n"
